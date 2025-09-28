@@ -59,6 +59,9 @@ if [[ "$ARCH" == "x86_64" || "$ARCH" == "aarch64" ]] && ! command -v limine &>/d
       if [[ ! "$current_cmdline" =~ quiet ]]; then
         new_cmdline="$new_cmdline quiet"
       fi
+      if [[ ! "$current_cmdline" =~ "apple_dcp.show_notch" ]]; then
+        new_cmdline="$new_cmdline apple_dcp.show_notch=1"
+      fi
 
       # Trim any leading/trailing spaces
       new_cmdline=$(echo "$new_cmdline" | xargs)

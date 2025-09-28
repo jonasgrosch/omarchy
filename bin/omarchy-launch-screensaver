@@ -6,7 +6,7 @@ if ! command -v tte &>/dev/null; then
 fi
 
 # Exit early if screensave is already running
-pgrep -f "alacritty --class Screensaver" && exit 0
+pgrep -f "$TERMINAL --class=omarchy.screensaver" && exit 0
 
 # Allow screensaver to be turned off but also force started
 if [[ -f ~/.local/state/omarchy/toggles/screensaver-off ]] && [[ $1 != "force" ]]; then
@@ -15,14 +15,23 @@ fi
 
 focused=$(hyprctl monitors -j | jq -r '.[] | select(.focused == true).name')
 
+
+declare -a term_args
+case "${TERMINAL:-}" in
+  ghostty)   term_args=(--background=#000000 --cursor-color=#000000 --font-size=18 --background-opacity=1) ;;
+  alacritty) term_args=(-o 'colors.primary.background="#000000"' -o 'colors.cursor.cursor="#000000"' -o 'font.size=18' -o 'window.opacity=1') ;;
+  kitty)     term_args=(-o 'background=#000000' -o 'cursor=#000000' -o 'font_size=18' -o 'background_opacity=1') ;;
+  *)         term_args=() ;;
+esac
+
 for m in $(hyprctl monitors -j | jq -r '.[] | .name'); do
   hyprctl dispatch focusmonitor $m
 
-  # FIXME: Find a way to make this generic where we it can work for kitty + ghostty
-  hyprctl dispatch exec -- \
-    alacritty --class Screensaver \
-    --config-file ~/.local/share/omarchy/default/alacritty/screensaver.toml \
-    -e omarchy-cmd-screensaver
+  cmd=( "$TERMINAL" --class=omarchy.screensaver "${term_args[@]}" -e omarchy-cmd-screensaver )
+
+  cmd_str=$(printf '%q ' "${cmd[@]}")
+
+  hyprctl dispatch exec "$cmd_str"
 done
 
 hyprctl dispatch focusmonitor $focused
